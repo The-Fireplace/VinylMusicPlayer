@@ -35,6 +35,7 @@ import androidx.annotation.Nullable;
 import androidx.media.MediaBrowserServiceCompat;
 
 import com.bumptech.glide.request.transition.Transition;
+import com.poupa.vinylmusicplayer.App;
 import com.poupa.vinylmusicplayer.R;
 import com.poupa.vinylmusicplayer.appwidgets.AppWidgetBig;
 import com.poupa.vinylmusicplayer.appwidgets.AppWidgetCard;
@@ -412,7 +413,27 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
                 notHandledMetaChangedForCurrentTrack = true;
                 sendChangeInternal(META_CHANGED);
                 sendChangeInternal(QUEUE_CHANGED);
+
+                Toast.makeText(
+                        App.getStaticContext(),
+                        String.format("Restored queue %d/%d", restoredPosition, restoredQueue.size()),
+                        Toast.LENGTH_LONG
+                ).show();
             }
+            else {
+                Toast.makeText(
+                        App.getStaticContext(),
+                        String.format("REFUSED queue %d/(%d, %d)", restoredPosition, restoredQueue.size(), restoredOriginalQueue.size()),
+                        Toast.LENGTH_LONG
+                ).show();
+            }
+        }
+        else {
+            Toast.makeText(
+                    App.getStaticContext(),
+                    String.format("DONT restore queue %s, %d", queuesRestored, playingQueue.size()),
+                    Toast.LENGTH_LONG
+            ).show();
         }
         queuesRestored = true;
     }
