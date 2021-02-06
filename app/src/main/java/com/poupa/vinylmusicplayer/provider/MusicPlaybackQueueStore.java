@@ -22,10 +22,12 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 import android.provider.MediaStore.Audio.AudioColumns;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.poupa.vinylmusicplayer.App;
 import com.poupa.vinylmusicplayer.discog.tagging.MultiValuesTagUtil;
 import com.poupa.vinylmusicplayer.model.Song;
 
@@ -136,6 +138,14 @@ public class MusicPlaybackQueueStore extends SQLiteOpenHelper {
     public synchronized void saveQueues(@NonNull final ArrayList<Song> playingQueue, @NonNull final ArrayList<Song> originalPlayingQueue) {
         saveQueue(PLAYING_QUEUE_TABLE_NAME, playingQueue);
         saveQueue(ORIGINAL_PLAYING_QUEUE_TABLE_NAME, originalPlayingQueue);
+
+        if (playingQueue.size() != originalPlayingQueue.size()) {
+            Toast.makeText(
+                    App.getStaticContext(),
+                    String.format("Discrep detected on queue size: %d vs %d", playingQueue.size(), originalPlayingQueue.size()),
+                    Toast.LENGTH_LONG
+            ).show();
+        }
     }
 
     /**

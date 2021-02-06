@@ -400,7 +400,9 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
             int restoredPosition = PreferenceManager.getDefaultSharedPreferences(this).getInt(SAVED_POSITION, -1);
             int restoredPositionInTrack = PreferenceManager.getDefaultSharedPreferences(this).getInt(SAVED_POSITION_IN_TRACK, -1);
 
-            if (restoredQueue.size() > 0 && restoredQueue.size() == restoredOriginalQueue.size() && restoredPosition != -1) {
+            boolean okayToRestore = (restoredQueue.size() > 0) && (restoredPosition != -1);
+            okayToRestore &= (restoredQueue.size() == restoredOriginalQueue.size());
+            if (okayToRestore) {
                 this.originalPlayingQueue = restoredOriginalQueue;
                 this.playingQueue = restoredQueue;
 
@@ -413,27 +415,14 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
                 notHandledMetaChangedForCurrentTrack = true;
                 sendChangeInternal(META_CHANGED);
                 sendChangeInternal(QUEUE_CHANGED);
-
-                Toast.makeText(
-                        App.getStaticContext(),
-                        String.format("Restored queue %d/%d", restoredPosition, restoredQueue.size()),
-                        Toast.LENGTH_LONG
-                ).show();
             }
             else {
                 Toast.makeText(
                         App.getStaticContext(),
-                        String.format("REFUSED queue %d/(%d, %d)", restoredPosition, restoredQueue.size(), restoredOriginalQueue.size()),
+                        String.format("Discrep detected - not restoring queue %d/(%d, %d)", restoredPosition, restoredQueue.size(), restoredOriginalQueue.size()),
                         Toast.LENGTH_LONG
                 ).show();
             }
-        }
-        else {
-            Toast.makeText(
-                    App.getStaticContext(),
-                    String.format("DONT restore queue %s, %d", queuesRestored, playingQueue.size()),
-                    Toast.LENGTH_LONG
-            ).show();
         }
         queuesRestored = true;
     }
