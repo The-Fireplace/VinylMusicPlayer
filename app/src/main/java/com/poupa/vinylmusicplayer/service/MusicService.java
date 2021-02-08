@@ -67,6 +67,7 @@ import com.poupa.vinylmusicplayer.util.Util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 import java.util.function.BiFunction;
 
@@ -139,10 +140,10 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
 
     public boolean pendingQuit = false;
 
-    private AppWidgetBig appWidgetBig = AppWidgetBig.getInstance();
-    private AppWidgetClassic appWidgetClassic = AppWidgetClassic.getInstance();
-    private AppWidgetSmall appWidgetSmall = AppWidgetSmall.getInstance();
-    private AppWidgetCard appWidgetCard = AppWidgetCard.getInstance();
+    private final AppWidgetBig appWidgetBig = AppWidgetBig.getInstance();
+    private final AppWidgetClassic appWidgetClassic = AppWidgetClassic.getInstance();
+    private final AppWidgetSmall appWidgetSmall = AppWidgetSmall.getInstance();
+    private final AppWidgetCard appWidgetCard = AppWidgetCard.getInstance();
 
     private Playback playback;
     private ArrayList<Song> playingQueue = new ArrayList<>();
@@ -155,7 +156,6 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
     private boolean pausedByTransientLossOfFocus;
     private PlayingNotification playingNotification;
     private AudioManager audioManager;
-    @SuppressWarnings("deprecation")
     private MediaSessionCompat mediaSession;
     private PowerManager.WakeLock wakeLock;
     private PlaybackHandler playerHandler;
@@ -168,10 +168,10 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
     private QueueSaveHandler queueSaveHandler;
     private HandlerThread musicPlayerHandlerThread;
     private HandlerThread queueSaveHandlerThread;
-    private SongPlayCountHelper songPlayCountHelper = new SongPlayCountHelper();
+    private final SongPlayCountHelper songPlayCountHelper = new SongPlayCountHelper();
     private ThrottledSeekHandler throttledSeekHandler;
     private boolean becomingNoisyReceiverRegistered;
-    private IntentFilter becomingNoisyReceiverIntentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+    private final IntentFilter becomingNoisyReceiverIntentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
     private final BroadcastReceiver becomingNoisyReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, @NonNull Intent intent) {
@@ -184,8 +184,6 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
     private boolean notHandledMetaChangedForCurrentTrack;
 
     private Handler uiThreadHandler;
-
-    private MediaSessionCallback mMediaSessionCallback;
 
     private PackageValidator mPackageValidator;
 
@@ -256,10 +254,8 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
         mediaButtonIntent.setComponent(mediaButtonReceiverComponentName);
 
         PendingIntent mediaButtonReceiverPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, mediaButtonIntent, 0);
-        mMediaSessionCallback = new MediaSessionCallback(this, getApplicationContext());
+        MediaSessionCallback mMediaSessionCallback = new MediaSessionCallback(this, getApplicationContext());
         mediaSession = new MediaSessionCompat(this, "VinylMusicPlayer", mediaButtonReceiverComponentName, mediaButtonReceiverPendingIntent);
-        mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
-                | MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS);
         mediaSession.setCallback(mMediaSessionCallback);
         mediaSession.setActive(true);
         mediaSession.setMediaButtonReceiver(mediaButtonReceiverPendingIntent);
@@ -293,10 +289,7 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
                             ArrayList<Song> playlistSongs = playlist.getSongs(getApplicationContext());
                             if (!playlistSongs.isEmpty()) {
                                 if (shuffleMode == SHUFFLE_MODE_SHUFFLE) {
-                                    int startPosition = 0;
-                                    if (!playlistSongs.isEmpty()) {
-                                        startPosition = new Random().nextInt(playlistSongs.size());
-                                    }
+                                    int startPosition = new Random().nextInt(playlistSongs.size());
                                     openQueue(playlistSongs, startPosition, true);
                                     setShuffleMode(shuffleMode);
                                 } else {
@@ -401,7 +394,7 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
             int restoredPosition = PreferenceManager.getDefaultSharedPreferences(this).getInt(SAVED_POSITION, -1);
             int restoredPositionInTrack = PreferenceManager.getDefaultSharedPreferences(this).getInt(SAVED_POSITION_IN_TRACK, -1);
 
-            if ((restoredQueue.size() > 0) && (restoredPosition != -1) && (restoredQueue.size() == restoredOriginalQueue.size())) {
+            if (restoredQueue.size() > 0 && restoredQueue.size() == restoredOriginalQueue.size() && restoredPosition != -1) {
                 this.originalPlayingQueue = restoredOriginalQueue;
                 this.playingQueue = restoredQueue;
 
@@ -1045,7 +1038,7 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
                     diff.removeAll(l2);
                     return diff;
                 };
-                ArrayList<Song> diff = null;
+                ArrayList<Song> diff;
                 if (playingQueue.size() > originalPlayingQueue.size()) {
                     diff = listDiff.apply(playingQueue, originalPlayingQueue);
                     originalPlayingQueue.addAll(diff);
@@ -1055,7 +1048,7 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
                 }
                 Toast.makeText(
                         App.getStaticContext(),
-                        String.format("Queue (%d vs %d): %s",
+                        String.format(Locale.getDefault(), "Queue (%d vs %d): %s",
                                 playingQueue.size(),
                                 originalPlayingQueue.size(),
                                 diff.get(0).title),
