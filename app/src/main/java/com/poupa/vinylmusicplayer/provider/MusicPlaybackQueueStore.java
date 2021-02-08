@@ -137,32 +137,6 @@ public class MusicPlaybackQueueStore extends SQLiteOpenHelper {
     }
 
     public synchronized void saveQueues(@NonNull final ArrayList<Song> playingQueue, @NonNull final ArrayList<Song> originalPlayingQueue) {
-        if (playingQueue.size() != originalPlayingQueue.size()) {
-            BiFunction<ArrayList<Song>, ArrayList<Song>, String> buildDiff = (l1, l2) -> {
-                assert(l1.size() > l2.size());
-
-                String text = "";
-                ArrayList<Song> listDiff = new ArrayList<>(l1);
-                listDiff.removeAll(l2);
-                for (Song song : listDiff) {
-                    text += "\n" + song.title;
-                }
-                return text;
-            };
-            BiFunction<ArrayList<Song>, ArrayList<Song>, String> safeBuildDiff = (l1, l2) -> {
-                if (l1.size() == l2.size()) return "";
-                return (l1.size() < l2.size()) ? buildDiff.apply(l2, l1) : buildDiff.apply(l1, l2);
-            };
-            Toast.makeText(
-                    App.getStaticContext(),
-                    String.format("Discrep detected on queue size: %d vs %d %s",
-                            playingQueue.size(),
-                            originalPlayingQueue.size(),
-                            safeBuildDiff.apply(playingQueue, originalPlayingQueue)),
-                    Toast.LENGTH_LONG
-            ).show();
-        }
-
         saveQueue(PLAYING_QUEUE_TABLE_NAME, playingQueue);
         saveQueue(ORIGINAL_PLAYING_QUEUE_TABLE_NAME, originalPlayingQueue);
     }

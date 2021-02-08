@@ -68,6 +68,7 @@ import com.poupa.vinylmusicplayer.util.Util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.BiFunction;
 
 /**
  * @author Karim Abou Zeid (kabouzeid), Andrew Neal
@@ -400,18 +401,7 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
             int restoredPosition = PreferenceManager.getDefaultSharedPreferences(this).getInt(SAVED_POSITION, -1);
             int restoredPositionInTrack = PreferenceManager.getDefaultSharedPreferences(this).getInt(SAVED_POSITION_IN_TRACK, -1);
 
-            if ((restoredQueue.size() > 0) && (restoredPosition != -1)) {
-                if (restoredQueue.size() != restoredOriginalQueue.size()) {
-                    Toast.makeText(
-                            App.getStaticContext(),
-                            String.format("Discrep detected: %d/(%d, %d)", restoredPosition, restoredQueue.size(), restoredOriginalQueue.size()),
-                            Toast.LENGTH_LONG
-                    ).show();
-
-                    // TODO Swallow the error
-                    restoredOriginalQueue = new ArrayList<>(restoredQueue);
-                }
-
+            if ((restoredQueue.size() > 0) && (restoredPosition != -1) && (restoredQueue.size() == restoredOriginalQueue.size())) {
                 this.originalPlayingQueue = restoredOriginalQueue;
                 this.playingQueue = restoredQueue;
 
@@ -1047,6 +1037,33 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
     }
 
     public void notifyChange(@NonNull final String what) {
+        if (what.equals(QUEUE_CHANGED)) {
+            // Detect and rectify the diff on the queue data structures
+            if (playingQueue.size() != originalPlayingQueue.size()) {
+                BiFunction<ArrayList<Song>, ArrayList<Song>, ArrayList<Song>> listDiff = (l1, l2) -> {
+                    ArrayList<Song> diff = new ArrayList<>(l1);
+                    diff.removeAll(l2);
+                    return diff;
+                };
+                ArrayList<Song> diff = null;
+                if (playingQueue.size() > originalPlayingQueue.size()) {
+                    diff = listDiff.apply(playingQueue, originalPlayingQueue);
+                    originalPlayingQueue.addAll(diff);
+                } else {
+                    diff = listDiff.apply(originalPlayingQueue, playingQueue);
+                    originalPlayingQueue.removeAll(diff);
+                }
+                Toast.makeText(
+                        App.getStaticContext(),
+                        String.format("Queue (%d vs %d): %s",
+                                playingQueue.size(),
+                                originalPlayingQueue.size(),
+                                diff.get(0).title),
+                        Toast.LENGTH_LONG
+                ).show();
+            }
+        }
+
         handleAndSendChangeInternal(what);
         sendPublicIntent(what);
     }
@@ -1173,11 +1190,7 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
                 sendChangeInternal(MusicService.META_CHANGED);
                 break;
             case PreferenceUtil.RG_SOURCE_MODE:
-                applyReplayGain();
-                break;
             case PreferenceUtil.RG_PREAMP_WITH_TAG:
-                applyReplayGain();
-                break;
             case PreferenceUtil.RG_PREAMP_WITHOUT_TAG:
                 applyReplayGain();
                 break;
