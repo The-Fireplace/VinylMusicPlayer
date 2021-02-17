@@ -484,16 +484,14 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
         playerHandler.obtainMessage(PREPARE_NEXT).sendToTarget();
     }
 
-    public boolean prepareNextImpl() {
+    public void prepareNextImpl() {
         synchronized (this) {
             try {
                 int nextPosition = getNextPosition(false);
                 playback.setNextDataSource(getTrackUri(getSongAt(nextPosition)));
                 this.nextPosition = nextPosition;
-                return true;
             } catch (Exception e) {
                 e.printStackTrace();
-                return false;
             }
         }
     }
@@ -796,7 +794,6 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
             Song tmpSong = originalPlayingQueue.remove(from);
             originalPlayingQueue.add(to, tmpSong);
         }
-        // TODO else dont bother maintaining the originalPlayingQueue?
 
         if (from > currentPosition && to <= currentPosition) {
             position = currentPosition + 1;
@@ -1212,6 +1209,7 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
         @Override
         public void onReceive(final Context context, final Intent intent) {
             final String command = intent.getStringExtra(EXTRA_APP_WIDGET_NAME);
+            if (command == null) return;
 
             final int[] ids = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS);
             switch (command) {
