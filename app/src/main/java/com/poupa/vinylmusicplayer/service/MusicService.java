@@ -720,25 +720,40 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
         }
     }
 
+    private final static boolean DISCARD_EXISTING_POSITION_ON_ADD = true;
+
     public void addSong(int position, Song song) {
+        if (DISCARD_EXISTING_POSITION_ON_ADD) removeSong(song);
+
         playingQueue.add(position, song);
         originalPlayingQueue.add(position, song);
         notifyChange(QUEUE_CHANGED);
     }
 
     public void addSong(Song song) {
+        if (DISCARD_EXISTING_POSITION_ON_ADD) removeSong(song);
+
         playingQueue.add(song);
         originalPlayingQueue.add(song);
         notifyChange(QUEUE_CHANGED);
     }
 
     public void addSongs(int position, List<Song> songs) {
+        if (DISCARD_EXISTING_POSITION_ON_ADD) {
+            final int savedPosition = position;
+            removeSongs(songs);
+            final int shift = position - savedPosition;
+            position += shift;
+        }
+
         playingQueue.addAll(position, songs);
         originalPlayingQueue.addAll(position, songs);
         notifyChange(QUEUE_CHANGED);
     }
 
     public void addSongs(List<Song> songs) {
+        if (DISCARD_EXISTING_POSITION_ON_ADD) removeSongs(songs);
+
         playingQueue.addAll(songs);
         originalPlayingQueue.addAll(songs);
         notifyChange(QUEUE_CHANGED);
@@ -770,6 +785,10 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
             }
         }
         notifyChange(QUEUE_CHANGED);
+    }
+
+    private void removeSongs(@NonNull List<Song> songs) {
+        for (Song song : songs) removeSong(song);
     }
 
     private void rePosition(int deletedPosition) {
