@@ -740,9 +740,9 @@ public class MusicService extends MediaBrowserServiceCompat implements SharedPre
 
     public void addSongs(int position, List<Song> songs) {
         if (DISCARD_EXISTING_POSITION_ON_ADD) {
-            final int savedPosition = position;
+            final int savedPosition = this.position;
             removeSongs(songs);
-            final int shift = position - savedPosition;
+            final int shift = this.position - savedPosition;
             position += shift;
         }
 
